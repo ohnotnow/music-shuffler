@@ -4,11 +4,15 @@ A terminal app that picks random tracks from your local music library.
 
 ## What it does
 
-Every music player's shuffle is broken. They all end up playing the same 200 tracks out of your 40,000. I got tired of it, so I wrote this instead.
-
 Music Shuffler scans your configured directories, picks 10 random files (filtering out anything matching your ignore patterns), and shows them in a numbered list. Press a number to play it. Press `r` to get a fresh batch. There's a little animated EQ visualiser while tracks are playing, because why not.
 
 Works on macOS and Linux. It shells out to a configurable player command (`afplay` by default, but you can set it to `mpv`, `aplay`, or whatever you like).
+
+## Why?
+
+I have a lot of local music, but also a lot of local audiobooks and spoken word recordings.  So general 'shuffle mode' would leave me listening to a 40 second section of an Agatha Christie audiobook or a 2hr long recording of an interview.
+
+I also entirely forget about a lot of the music I've listened to in the past (or at least can't remember the band/album/track name), so I want to be able to pick a random track and think 'Damn - not heard this for 20 years!'.
 
 ## Prerequisites
 
