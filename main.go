@@ -26,6 +26,7 @@ type config struct {
 	MusicDirs      []string `yaml:"music_dirs"`
 	IgnorePatterns []string `yaml:"ignore_patterns"`
 	TrackCount     int      `yaml:"track_count"`
+	Player         string   `yaml:"player"`
 }
 
 var (
@@ -59,6 +60,7 @@ var lastPlayedPath string
 func loadConfig() config {
 	cfg := config{
 		TrackCount: defaultTrackCount,
+		Player:     "afplay",
 	}
 
 	home, err := os.UserHomeDir()
@@ -234,7 +236,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *model) startPlayer(idx int) tea.Cmd {
-	m.player = exec.Command("afplay", m.tracks[idx])
+	m.player = exec.Command(m.cfg.Player, m.tracks[idx])
 	if err := m.player.Start(); err != nil {
 		m.err = fmt.Sprintf("Failed to play: %v", err)
 		m.playing = -1

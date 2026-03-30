@@ -1,0 +1,16 @@
+# Music Shuffler configuration
+# Also looks in: ~/.config/ms/config.yaml
+
+music_dirs:
+  - /Volumes/Drive/music/
+
+ignore_patterns:
+  - boring
+  - spoken.*word
+
+# Number of tracks to show (max 10)
+track_count: 10
+
+# Command used to play audio files (default: afplay)
+# Examples: mpv, aplay, ffplay -nodisp -autoexit
+player: afplay

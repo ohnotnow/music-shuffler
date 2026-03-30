@@ -8,12 +8,12 @@ Every music player's shuffle is broken. They all end up playing the same 200 tra
 
 Music Shuffler scans your configured directories, picks 10 random files (filtering out anything matching your ignore patterns), and shows them in a numbered list. Press a number to play it. Press `r` to get a fresh batch. There's a little animated EQ visualiser while tracks are playing, because why not.
 
-macOS only for now -- it shells out to `afplay`.
+Works on macOS and Linux. It shells out to a configurable player command (`afplay` by default, but you can set it to `mpv`, `aplay`, or whatever you like).
 
 ## Prerequisites
 
-- Go 1.21+
-- macOS (uses `afplay` for audio playback)
+- Go 1.21+ (or grab a pre-built binary from the [releases page](https://github.com/ohnotnow/music-shuffler/releases))
+- An audio player command (`afplay` on macOS, `mpv` or `aplay` on Linux)
 
 ## Getting started
 
@@ -34,9 +34,13 @@ ignore_patterns:
   - spoken.*word
 
 track_count: 10
+
+# Command used to play audio files (default: afplay)
+# Examples: mpv, aplay, ffplay -nodisp -autoexit
+player: afplay
 ```
 
-`music_dirs` accepts multiple paths, so you can point it at several drives or folders. `ignore_patterns` are regular expressions matched case-insensitively against the full file path. `track_count` controls how many tracks to show (max 10).
+`music_dirs` accepts multiple paths, so you can point it at several drives or folders. `ignore_patterns` are regular expressions matched case-insensitively against the full file path. `track_count` controls how many tracks to show (max 10). `player` is the command used to play files, defaulting to `afplay`. Linux users will want to change this to `mpv`, `aplay`, or similar.
 
 Then run it:
 
