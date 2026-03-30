@@ -37,7 +37,7 @@ jobs:
         run: |
           binary="music-shuffler-${{ matrix.goos }}-${{ matrix.goarch }}"
           go build -ldflags="-s -w" -o "${binary}" .
-          tar czf "${binary}.tar.gz" "${binary}" ms.yaml
+          tar czf "${binary}.tar.gz" "${binary}" ms.yaml.example
 
       - uses: actions/upload-artifact@v4
         with:
