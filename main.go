@@ -43,11 +43,12 @@ type model struct {
 	cfg      config
 	allFiles []string
 	tracks   []string
-	playing  int // -1 = nothing playing
-	status   string
-	err      string
-	player   *exec.Cmd
-	eqLevels []int
+	playing   int // -1 = nothing playing
+	status    string
+	err       string
+	player    *exec.Cmd
+	eqLevels  []int
+	fullPaths bool
 }
 
 type playerFinishedMsg struct{ index int }
@@ -186,6 +187,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.status = "Shuffled!"
 			return m, nil
 
+		case "p", " ":
+			m.fullPaths = !m.fullPaths
+			return m, nil
+
 		case "s":
 			m.stopPlayer()
 			m.playing = -1
@@ -275,7 +280,10 @@ func (m model) View() string {
 
 	for i, track := range m.tracks {
 		num := numberStyle.Render(fmt.Sprintf(" %d ", i))
-		name := trackName(m.cfg, track)
+		name := track
+		if !m.fullPaths {
+			name = trackName(m.cfg, track)
+		}
 		if i == m.playing {
 			b.WriteString(num + " " + playingStyle.Render("▶ "+name))
 		} else {
@@ -286,11 +294,12 @@ func (m model) View() string {
 
 	if m.playing >= 0 {
 		b.WriteString("\n" + renderEQ(m.eqLevels) + "\n")
+		b.WriteString("\n " + m.tracks[m.playing] + "\n")
 	} else if m.status != "" {
 		b.WriteString("\n " + m.status + "\n")
 	}
 
-	b.WriteString(helpStyle.Render(" 0-9 play · s stop · r shuffle · q quit"))
+	b.WriteString(helpStyle.Render(" 0-9 play · s stop · r shuffle · p path · q quit"))
 	b.WriteString("\n")
 
 	return b.String()
@@ -298,8 +307,12 @@ func (m model) View() string {
 
 func main() {
 	p := tea.NewProgram(initialModel())
-	if _, err := p.Run(); err != nil {
+	result, err := p.Run()
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
+	}
+	if m, ok := result.(model); ok && m.playing >= 0 {
+		fmt.Printf("\nLast playing: %s\n", m.tracks[m.playing])
 	}
 }
