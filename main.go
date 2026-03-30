@@ -54,6 +54,8 @@ type model struct {
 type playerFinishedMsg struct{ index int }
 type eqTickMsg struct{}
 
+var lastPlayedPath string
+
 func loadConfig() config {
 	cfg := config{
 		TrackCount: defaultTrackCount,
@@ -177,6 +179,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		switch key {
 		case "q", "ctrl+c":
+			if m.playing >= 0 {
+				lastPlayedPath = m.tracks[m.playing]
+			}
 			m.stopPlayer()
 			return m, tea.Quit
 
@@ -294,7 +299,6 @@ func (m model) View() string {
 
 	if m.playing >= 0 {
 		b.WriteString("\n" + renderEQ(m.eqLevels) + "\n")
-		b.WriteString("\n " + m.tracks[m.playing] + "\n")
 	} else if m.status != "" {
 		b.WriteString("\n " + m.status + "\n")
 	}
@@ -307,12 +311,11 @@ func (m model) View() string {
 
 func main() {
 	p := tea.NewProgram(initialModel())
-	result, err := p.Run()
-	if err != nil {
+	if _, err := p.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
-	if m, ok := result.(model); ok && m.playing >= 0 {
-		fmt.Printf("\nLast playing: %s\n", m.tracks[m.playing])
+	if lastPlayedPath != "" {
+		fmt.Printf("\nLast playing: %s\n", lastPlayedPath)
 	}
 }
