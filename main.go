@@ -626,6 +626,11 @@ func main() {
 		return
 	}
 
+	if _, err := os.Stat("ms.yaml"); err == nil {
+		fmt.Println("Note: found ms.yaml in the current directory — this is no longer used.")
+		fmt.Printf("Config is now read from %s\n\n", configPath)
+	}
+
 	p := tea.NewProgram(initialModel(cfg))
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
