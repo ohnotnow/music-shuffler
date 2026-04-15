@@ -338,9 +338,14 @@ func (m model) updateMain(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.fullPaths = !m.fullPaths
 			return m, nil
 
-		case "c":
+		case "c", "C":
 			if m.playing >= 0 {
-				name := trackName(m.cfg, m.tracks[m.playing])
+				var name string
+				if key == "C" {
+					name = m.tracks[m.playing]
+				} else {
+					name = trackName(m.cfg, m.tracks[m.playing])
+				}
 				if err := clipboard.WriteAll(name); err != nil {
 					m.status = "Clipboard error"
 				} else {
@@ -573,7 +578,7 @@ func (m model) viewMain() string {
 		b.WriteString("\n " + m.status + "\n")
 	}
 
-	b.WriteString(helpStyle.Render(" 0-9 play · s stop · r shuffle · p path · c copy · i ignore · q quit"))
+	b.WriteString(helpStyle.Render(" 0-9 play · s stop · r shuffle · p path · c/C copy · i ignore · q quit"))
 	b.WriteString("\n")
 
 	return b.String()
