@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -337,6 +338,17 @@ func (m model) updateMain(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.fullPaths = !m.fullPaths
 			return m, nil
 
+		case "c":
+			if m.playing >= 0 {
+				name := trackName(m.cfg, m.tracks[m.playing])
+				if err := clipboard.WriteAll(name); err != nil {
+					m.status = "Clipboard error"
+				} else {
+					m.status = "Copied!"
+				}
+			}
+			return m, nil
+
 		case "s":
 			m.stopPlayer()
 			m.playing = -1
@@ -561,7 +573,7 @@ func (m model) viewMain() string {
 		b.WriteString("\n " + m.status + "\n")
 	}
 
-	b.WriteString(helpStyle.Render(" 0-9 play · s stop · r shuffle · p path · i ignore · q quit"))
+	b.WriteString(helpStyle.Render(" 0-9 play · s stop · r shuffle · p path · c copy · i ignore · q quit"))
 	b.WriteString("\n")
 
 	return b.String()
