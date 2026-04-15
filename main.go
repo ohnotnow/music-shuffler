@@ -346,6 +346,12 @@ func (m model) updateMain(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "i":
 			m.mode = modeIgnoreInput
 			m.ignoreInput.Reset()
+			if m.playing >= 0 {
+				rel := trackName(m.cfg, m.tracks[m.playing])
+				if base := strings.SplitN(rel, string(filepath.Separator), 2)[0]; base != rel {
+					m.ignoreInput.SetValue(base)
+				}
+			}
 			m.ignoreInput.Focus()
 			m.status = ""
 			return m, m.ignoreInput.Cursor.BlinkCmd()
@@ -606,7 +612,7 @@ func (m model) viewIgnoreConfirm() string {
 	b.WriteString(titleStyle.Render("~ Add Ignore Pattern ~"))
 	b.WriteString("\n\n")
 	b.WriteString(fmt.Sprintf(" Add %s to ignore patterns? ", playingStyle.Render(m.pendingPattern)))
-	b.WriteString(helpStyle.Render("y/n"))
+	b.WriteString(numberStyle.Render("y/n"))
 	b.WriteString("\n")
 
 	return b.String()
