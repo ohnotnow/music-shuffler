@@ -325,6 +325,10 @@ func (m model) updateMain(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.playing >= 0 {
 				lastPlayedPath = m.tracks[m.playing]
 			}
+			// Disarm ambient first: stopPlayer makes the killed track fire a
+			// playerFinishedMsg, which could race ahead of the quit and trigger
+			// an auto-advance — spawning a new track that outlives the program.
+			m.continuous = false
 			m.stopPlayer()
 			return m, tea.Quit
 
