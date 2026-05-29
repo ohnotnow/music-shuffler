@@ -82,6 +82,7 @@ type model struct {
 	mode           appMode
 	ignoreInput    textinput.Model
 	pendingPattern string
+	continuous     bool // ambient mode: auto-advance to a fresh random track on finish
 }
 
 type playerFinishedMsg struct{ index int }
@@ -331,6 +332,7 @@ func (m model) updateMain(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.stopPlayer()
 			m.tracks = pickRandom(m.allFiles, m.cfg.TrackCount)
 			m.playing = -1
+			m.continuous = false
 			m.status = "Shuffled!"
 			return m, nil
 
@@ -357,7 +359,29 @@ func (m model) updateMain(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "s":
 			m.stopPlayer()
 			m.playing = -1
+			m.continuous = false
 			m.status = "Stopped"
+			return m, nil
+
+		case "a":
+			m.continuous = !m.continuous
+			if m.continuous {
+				if m.playing < 0 {
+					// Nothing playing yet — kick off the stream.
+					return m, m.advance()
+				}
+				m.status = "Ambient on"
+				return m, nil
+			}
+			m.status = "Ambient off"
+			return m, nil
+
+		case "right", "enter":
+			// Skip to a fresh random track. Leaves the ambient flag as-is:
+			// a one-shot surprise when off, a skip when on.
+			if len(m.allFiles) > 0 {
+				return m, m.advance()
+			}
 			return m, nil
 
 		case "i":
@@ -394,6 +418,9 @@ func (m model) updateMain(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case playerFinishedMsg:
 		if m.playing == msg.index {
+			if m.continuous {
+				return m, m.advance()
+			}
 			m.playing = -1
 			m.status = "Finished"
 			for i := range m.eqLevels {
@@ -468,6 +495,7 @@ func (m model) updateIgnoreConfirm(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.stopPlayer()
 			m.tracks = pickRandom(m.allFiles, m.cfg.TrackCount)
 			m.playing = -1
+			m.continuous = false
 			m.status = "Pattern added, reshuffled!"
 			m.mode = modeMain
 			m.pendingPattern = ""
@@ -495,6 +523,30 @@ func (m model) updateIgnoreConfirm(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 	return m, nil
+}
+
+// advance reshuffles to a fresh batch and plays a random track from it. Used by
+// ambient mode (on natural finish) and the next/skip key. It only starts a new
+// EQ tick when nothing was already playing — a natural finish keeps the existing
+// tick loop alive (playing never hits -1), so starting another would stack timers.
+func (m *model) advance() tea.Cmd {
+	if len(m.allFiles) == 0 {
+		return nil
+	}
+	wasPlaying := m.playing >= 0
+	m.stopPlayer()
+	m.tracks = pickRandom(m.allFiles, m.cfg.TrackCount)
+	idx := rand.IntN(len(m.tracks))
+	m.playing = idx
+	m.status = ""
+	playerCmd := m.startPlayer(idx)
+	if playerCmd == nil {
+		return nil
+	}
+	if wasPlaying {
+		return playerCmd
+	}
+	return tea.Batch(playerCmd, eqTickCmd())
 }
 
 func (m *model) startPlayer(idx int) tea.Cmd {
@@ -557,6 +609,10 @@ func (m model) viewMain() string {
 
 	b.WriteString(titleStyle.Render("~ Music Shuffler ~"))
 	b.WriteString("\n")
+	if m.continuous {
+		b.WriteString(playingStyle.Render(" ◆ ambient mode — auto-playing random tracks"))
+		b.WriteString("\n")
+	}
 
 	for i, track := range m.tracks {
 		num := numberStyle.Render(fmt.Sprintf(" %d ", i))
@@ -578,7 +634,7 @@ func (m model) viewMain() string {
 		b.WriteString("\n " + m.status + "\n")
 	}
 
-	b.WriteString(helpStyle.Render(" 0-9 play · s stop · r shuffle · p path · c/C copy · i ignore · q quit"))
+	b.WriteString(helpStyle.Render(" 0-9 play · →/⏎ next · a ambient · s stop · r shuffle · p path · c/C copy · i ignore · q quit"))
 	b.WriteString("\n")
 
 	return b.String()
